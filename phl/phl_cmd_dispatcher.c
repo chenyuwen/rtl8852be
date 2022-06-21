@@ -1306,7 +1306,7 @@ u8 get_module_by_id(struct cmd_dispatcher *obj, enum phl_module_id id,
 
 	for (i = 0; i < PHL_MDL_PRI_MAX; i++) {
 
-		if(pq_search_node(d, &(obj->module_q[i]), &node, _bh, false, &id, search_mdl)) {
+		if(pq_search_node(d, &(obj->module_q[i]), &node, _irq, false, &id, search_mdl)) {
 			*mdl = (struct phl_bk_module*)node;
 			return true;
 		}
