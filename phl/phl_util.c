@@ -33,23 +33,23 @@ void pq_reset(void *d, struct phl_queue *q, enum lock_type type)
 {
 	_os_spinlockfg sp_flags;
 
-	_os_spinlock(d, &q->lock, type, &sp_flags);
+	_os_spinlock(d, &q->lock, _irq, &sp_flags);
 	INIT_LIST_HEAD(&q->queue);
 	q->cnt = 0;
-	_os_spinunlock(d, &q->lock, type, &sp_flags);
+	_os_spinunlock(d, &q->lock, _irq, &sp_flags);
 }
 
 u8 pq_push(void *d, struct phl_queue *q, _os_list *obj, u8 pos, enum lock_type type)
 {
 	_os_spinlockfg sp_flags;
 
-	_os_spinlock(d, &q->lock, type, &sp_flags);
+	_os_spinlock(d, &q->lock, _irq, &sp_flags);
 	if(pos == _first)
 		list_add(obj, &q->queue);
 	else
 		list_add_tail(obj, &q->queue);
 	q->cnt++;
-	_os_spinunlock(d, &q->lock, type, &sp_flags);
+	_os_spinunlock(d, &q->lock, _irq, &sp_flags);
 	return true;
 }
 
@@ -78,10 +78,10 @@ u8 pq_get_front(void *d, struct phl_queue *q, _os_list **obj, enum lock_type typ
 
 	(*obj) = NULL;
 
-	_os_spinlock(d, &q->lock, type, &sp_flags);
+	_os_spinlock(d, &q->lock, _irq, &sp_flags);
 	if(!list_empty(&q->queue) && (q->cnt > 0))
 		(*obj) = q->queue.next;
-	_os_spinunlock(d, &q->lock, type, &sp_flags);
+	_os_spinunlock(d, &q->lock, _irq, &sp_flags);
 	return ((*obj) == NULL || (*obj) == &q->queue) ? (false) : (true);
 }
 
@@ -93,9 +93,9 @@ u8 pq_get_next(void *d, struct phl_queue *queue, _os_list *cur_obj,
 	(*obj) = NULL;
 	if(cur_obj == NULL)
 		return false;
-	_os_spinlock(d, &queue->lock, type, &sp_flags);
+	_os_spinlock(d, &queue->lock, _irq, &sp_flags);
 	(*obj) = cur_obj->next;
-	_os_spinunlock(d, &queue->lock, type, &sp_flags);
+	_os_spinunlock(d, &queue->lock, _irq, &sp_flags);
 	return ((*obj) == NULL || (*obj) == &(queue->queue)) ? (false) : (true);
 }
 
@@ -105,10 +105,10 @@ u8 pq_get_tail(void *d, struct phl_queue *q, _os_list **obj, enum lock_type type
 
 	(*obj) = NULL;
 
-	_os_spinlock(d, &q->lock, type, &sp_flags);
+	_os_spinlock(d, &q->lock, _irq, &sp_flags);
 	if(!list_empty(&q->queue) && (q->cnt > 0))
 		(*obj) = q->queue.prev;
-	_os_spinunlock(d, &q->lock, type, &sp_flags);
+	_os_spinunlock(d, &q->lock, _irq, &sp_flags);
 	return ((*obj) == NULL || (*obj) == &q->queue) ? (false) : (true);
 }
 
@@ -120,9 +120,9 @@ u8 pq_get_prev(void *d, struct phl_queue *queue, _os_list *cur_obj,
 	(*obj) = NULL;
 	if(cur_obj == NULL)
 		return false;
-	_os_spinlock(d, &queue->lock, type, &sp_flags);
+	_os_spinlock(d, &queue->lock, _irq, &sp_flags);
 	(*obj) = cur_obj->prev;
-	_os_spinunlock(d, &queue->lock, type, &sp_flags);
+	_os_spinunlock(d, &queue->lock, _irq, &sp_flags);
 	return ((*obj) == NULL || (*obj) == &(queue->queue)) ? (false) : (true);
 }
 
@@ -135,7 +135,7 @@ u8 pq_search_node(void *d, struct phl_queue *q, _os_list **obj,
 	bool bhit = false;
 
 	(*obj) = NULL;
-	_os_spinlock(d, &q->lock, type, &sp_flags);
+	_os_spinlock(d, &q->lock, _irq, &sp_flags);
 
 	if(!list_empty(&q->queue) && (q->cnt > 0))
 		newobj = _get_next(&q->queue);
@@ -157,7 +157,7 @@ u8 pq_search_node(void *d, struct phl_queue *q, _os_list **obj,
 
 		newobj = newobj->next;
 	};
-	_os_spinunlock(d, &q->lock, type, &sp_flags);
+	_os_spinunlock(d, &q->lock, _irq, &sp_flags);
 
 	return ((*obj) == NULL || (*obj) == &(q->queue)) ? (false) : (true);
 }
@@ -168,10 +168,10 @@ void pq_del_node(void *d, struct phl_queue *q, _os_list *obj, enum lock_type typ
 
 	if(obj == NULL)
 		return;
-	_os_spinlock(d, &q->lock, type, &sp_flags);
+	_os_spinlock(d, &q->lock, _irq, &sp_flags);
 	list_del(obj);
 	q->cnt--;
-	_os_spinunlock(d, &q->lock, type, &sp_flags);
+	_os_spinunlock(d, &q->lock, _irq, &sp_flags);
 }
 
 u8 pq_insert(void *d, struct phl_queue *q, enum lock_type type, void *priv, _os_list *input,
@@ -180,7 +180,7 @@ u8 pq_insert(void *d, struct phl_queue *q, enum lock_type type, void *priv, _os_
 	_os_spinlockfg sp_flags;
 	_os_list *obj = NULL;
 
-	_os_spinlock(d, &q->lock, type, &sp_flags);
+	_os_spinlock(d, &q->lock, _irq, &sp_flags);
 	obj = q->queue.next;
 	while (obj != &(q->queue)) {
 		if (pq_predicate && (pq_predicate(d, priv, input, obj) == true))
@@ -189,7 +189,7 @@ u8 pq_insert(void *d, struct phl_queue *q, enum lock_type type, void *priv, _os_
 	}
 	list_add_tail(input, obj);
 	q->cnt++;
-	_os_spinunlock(d, &q->lock, type, &sp_flags);
+	_os_spinunlock(d, &q->lock, _irq, &sp_flags);
 	return true;
 }
 u32 phl_get_passing_time_us(u32 start)
